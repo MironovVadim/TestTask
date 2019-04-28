@@ -1,0 +1,2 @@
+create table item (id integer not null auto_increment, available_count integer not null, description varchar(255) not null, name varchar(255) not null, price double not null, primary key (id));
+create table reserved_item (id integer not null auto_increment, count integer not null, is_canceled boolean not null, order_id integer not null, item_id integer not null references item(id), primary key (id));
