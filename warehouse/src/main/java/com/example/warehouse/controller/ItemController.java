@@ -45,11 +45,21 @@ public class ItemController {
                 .build();
     }
 
+    /**
+     * Проверка на наличие требуемых товаров
+     * @param reservedItems - на этот end-point присылаю список ReservedItemDto из сервиса orders
+     * @return
+     */
     @PostMapping("/isEnoughItemsToOrder")
     public boolean isEnoughItemsToOrder(@RequestBody List<ReservedItem> reservedItems) {
         return itemService.isEnoughItemsToOrder(reservedItems);
     }
 
+    /**
+     * Зарезервировать Item'ы для заказа
+     * @param reservedItems - на этот end-point присылаю список ReservedItemDto из сервиса orders
+     * @return
+     */
     @PostMapping("/order")
     public List<ReservedItem> orderItems(@RequestBody List<ReservedItem> reservedItems) {
         return itemService.orderItems(reservedItems);

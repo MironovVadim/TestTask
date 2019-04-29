@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Wrapper для url к серсиву WareHouse
+ */
 @ConfigurationProperties("warehouse")
 @Component
 @Data

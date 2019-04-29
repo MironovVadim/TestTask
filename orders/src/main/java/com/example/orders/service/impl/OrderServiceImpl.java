@@ -45,6 +45,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Orders createOrder(OrderDto orderDto) {
         Orders newOrder = orderDto.createOrderFromDto();
+        // Создание заказа со статусом NEW специально вынес из под основной транзакции,
+        // чтобы у сервиса WareHouse была возможность проверить наличие существующего заказа.
+        // Если случается исключение, то я просто выставляю заказу статус CANCELED без удаления.
         orderRepository.save(newOrder);
         return this.orderItems(newOrder, orderDto);
     }
@@ -59,22 +62,30 @@ public class OrderServiceImpl implements OrderService {
     public Orders orderItems(Orders newOrder, OrderDto orderDto) {
         int orderId = newOrder.getId();
         List<ReservedItemDto> reservedItems;
+        // Если этот блок выполняется не до конца, то в сервисе WareHouse не произойдет изменений
+        // и можно будет только отметить заказ как отмененый.
         try {
             List<ReservedItemDto> itemsToReserve = orderDto.getReservedItems();
+            // Проверка на наличие необходимых товаров
             if (!wareHouseApi.isEnoughItemsToOrder(itemsToReserve)) {
                 throw new NotEnoughItemsException("Недостаточно вещей на складе для заказа");
             }
             itemsToReserve.forEach(item -> item.setOrderId(orderId));
+            // обращение в WareHouse за оформлением Item'ов
             reservedItems = wareHouseApi.orderItems(itemsToReserve);
         } catch (Exception e) {
             orderRepository.delete(newOrder);
             throw new RuntimeException(e);
         }
 
+        // Если в этом блоке упадет исключение, то вызов метода this.cancelOrder(orderId);
+        // на 92 строчке должен откатить изменения в сервисе WareHouse (Item'ы будут отвечены как отмененные)
         try {
+            // цену каждого Item'а можно было добавить в DTO, но сделал как сделал.
             double orderPrice = wareHouseApi.getOrderPrice(orderId);
 
             newOrder.extractAndSetReservedItemsIds(reservedItems);
+            // Изменяю статус на ACTIVE в момент, когда Item'ы в WareHouse зарезервированы успешно
             newOrder.setState(Orders.State.ACTIVE);
             newOrder.setPrice(orderPrice);
 

@@ -1,6 +1,5 @@
 package com.example.warehouse.storeapi;
 
-import com.example.warehouse.exception.NoOrderException;
 import com.example.warehouse.exception.OrderStateException;
 import com.example.warehouse.model.dto.OrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,9 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Класс для взаимодействия с сервисом Orders
+ */
 @Component
 public class StoreApi {
 
@@ -32,6 +34,7 @@ public class StoreApi {
                 .expand(configuration.getUrl() + "/orders/{orderId}", params);
         ResponseEntity<OrderDto> response = restTemplate.getForEntity(url, OrderDto.class);
         OrderDto order = response.getBody();
+        // Если заказ не NEW, значит полученые данные некорректны
         if (!order.getState().equals("NEW")) {
             throw new OrderStateException("Заказ уже оформлен либо отменен");
         }

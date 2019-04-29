@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Класс для общения с сервисом WareHouse
+ */
 @Component
 public class WareHouseApi {
 
@@ -25,6 +28,11 @@ public class WareHouseApi {
         this.configuration = configuration;
     }
 
+    /**
+     * Достаточно ли предметов в БД для заказа
+     * @param reservedItems
+     * @return
+     */
     public boolean isEnoughItemsToOrder(List<ReservedItemDto> reservedItems) {
         URI url = restTemplate
                 .getUriTemplateHandler()
@@ -34,6 +42,11 @@ public class WareHouseApi {
         return response.getBody();
     }
 
+    /**
+     * зарезервировать Item'ы
+     * @param itemsToReserve
+     * @return
+     */
     public List<ReservedItemDto> orderItems(List<ReservedItemDto> itemsToReserve) {
         URI url = restTemplate
                 .getUriTemplateHandler()
@@ -43,6 +56,10 @@ public class WareHouseApi {
         return response.getBody();
     }
 
+    /**
+     * Отменить заказ Item'ов
+     * @param orderId
+     */
     public void cancelOrderItems(int orderId) {
         Map<String, Integer> params = new HashMap<>();
         params.put("orderId", orderId);
@@ -52,6 +69,11 @@ public class WareHouseApi {
         restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
     }
 
+    /**
+     * Посчитать стоимость заказа (стоило включить цену Item'ов в Dto, чтобы не обращаться за ней)
+     * @param orderId
+     * @return
+     */
     public double getOrderPrice(int orderId) {
         Map<String, Integer> params = new HashMap<>();
         params.put("orderId", orderId);

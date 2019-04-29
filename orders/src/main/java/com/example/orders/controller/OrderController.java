@@ -31,7 +31,10 @@ public class OrderController {
     public Orders getById(@PathVariable int orderId) {
         return orderService.getOrderById(orderId);
     }
-
+    /**
+     * Основные действия по оформлению заказа происходят в этом end-point'е
+     * @param orderDto - модель содержащая частичную информацию о выбранных предметах для заказа
+     */
     @PostMapping
     public ResponseEntity<?> create(@RequestBody OrderDto orderDto) {
         Orders newOrders = orderService.createOrder(orderDto);

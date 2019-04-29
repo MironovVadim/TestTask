@@ -43,19 +43,27 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ReservedItem> orderItems(List<ReservedItem> reservedItems) {
+        // Проверяю на то, что все itemId существуют в БД и что нужное количество для заказа имеется
         this.checkReservedItemsOnErrors(reservedItems);
         List<Integer> ids = reservedItems
                 .stream()
                 .map(ReservedItem::getItemId)
                 .collect(Collectors.toList());
         List<Item> items = itemRepository.findAllById(ids);
+        // Вычитаю необходимое количество из таблицы Item
         itemCountHelper.subtractItemCount(reservedItems, items);
 
         itemRepository.saveAll(items);
+        // и сохраняю как зарезервированные в таблице ReservedItem
         reservedItemRepository.saveAll(reservedItems);
         return reservedItems;
     }
 
+    /**
+     * Проверяю, все ли itemId существующие
+     * @param reservedItems
+     * @return
+     */
     private boolean isAllItemsExists(List<ReservedItem> reservedItems) {
         List<Integer> itemIds = reservedItems
                 .stream()
@@ -65,6 +73,10 @@ public class ItemServiceImpl implements ItemService {
         return count == itemIds.size();
     }
 
+    /**
+     * Отменить резерв Item'ов
+     * @param orderId
+     */
     @Override
     public void cancelItemOrder(int orderId) {
         List<ReservedItem> reservedItems = reservedItemRepository.findByOrderId(orderId);
@@ -75,14 +87,25 @@ public class ItemServiceImpl implements ItemService {
         reservedItemRepository.deleteAll(reservedItems);
     }
 
+    /**
+     * Хватает ли Item'ов для заказа
+     * @param reservedItems
+     * @return
+     */
     @Override
     public boolean isEnoughItemsToOrder(List<ReservedItem> reservedItems) {
         List<Integer> countRemainders = this.getCountRemainders(reservedItems);
+        // если хоть один остаток меньше нуля, значит заказ не будет осуществлен
         return countRemainders
                 .stream()
                 .noneMatch(remainder -> 0 > remainder);
     }
 
+    /**
+     * Посчитать стоимость заказа
+     * @param orderId
+     * @return
+     */
     @Override
     public double getOrderPrice(int orderId) {
         storeApi.checkOrderExists(orderId);
@@ -109,6 +132,11 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.findAllById(itemIds);
     }
 
+    /**
+     * Узнать остаток Item'ов в случае заказа
+     * @param reservedItems
+     * @return
+     */
     private List<Integer> getCountRemainders(List<ReservedItem> reservedItems) {
         Map<Integer, Integer> requiredItemIdCountMap = reservedItems
                 .stream()
@@ -127,6 +155,10 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Проверка на корректность данных по Item'ам
+     * @param reservedItems
+     */
     private void checkReservedItemsOnErrors(List<ReservedItem> reservedItems) {
         if (!this.isAllItemsExists(reservedItems)) {
             throw new ItemExistenceException("Не все указанные вещи существуют на складе");
